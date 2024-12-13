@@ -14,7 +14,7 @@ export class Appointment {
   @Prop({ required: true })
   date: Date;
 
-  @Prop({ default: 'Scheduled', enum: ['Scheduled', 'Completed', 'Cancelled'] })
+  @Prop({ default: 'scheduled', enum: ['scheduled', 'completed', 'cancelled'] })
   status: string;
 
   @Prop()
