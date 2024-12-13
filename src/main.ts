@@ -5,6 +5,7 @@ import { AllExceptionsFilter } from './filters/http-exception.filter';
 import { WinstonModule } from 'nest-winston';
 import * as winston from 'winston';
 import { ResponseLoggingInterceptor } from './common/middleware/response.logger.middleware';
+import { AuthGuard } from './auth/auth.guard';
 
 async function bootstrap() {
   const app = await NestFactory.create(
@@ -37,6 +38,7 @@ async function bootstrap() {
   // Global exception filter
   app.useGlobalFilters(new AllExceptionsFilter());
   //app.useGlobalInterceptors(new ResponseLoggingInterceptor());
+  app.useGlobalGuards(app.get(AuthGuard));
 
   await app.listen(process.env.PORT || 3000);
 }

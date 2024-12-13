@@ -8,22 +8,18 @@ import {
   Put,
   Delete,
   UseGuards,
-  NotFoundException,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
-
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-
-import { JwtAuthGuard } from '../auth/jwt.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
-import { User, UserRole } from './schemas/users.schema';
+import { UserRole } from './schemas/users.schema';
+import { AuthGuard } from '../auth/auth.guard'; // Import the custom AuthGuard
 
 @Controller('users')
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(AuthGuard, RolesGuard) // Apply custom AuthGuard and RolesGuard
 export class UsersController {
-  userModel: any;
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
@@ -41,33 +37,20 @@ export class UsersController {
   @Get(':id')
   @Roles(UserRole.CEO, UserRole.Admin) // CEO and Admin can view a specific user
   findOne(@Param('id') id: string) {
+    console.log('Fetching user with ID:', id);
     return this.usersService.findOne(id);
   }
 
   @Put(':id')
   @Roles(UserRole.CEO) // Only CEO can update users
-  async update(
-    id: string,
-    updateUserDto: Partial<CreateUserDto>,
-  ): Promise<User> {
-    const updatedUser = await this.userModel
-      .findByIdAndUpdate(
-        id,
-        updateUserDto, // Pass the partial DTO directly
-        { new: true, select: { password: 0 } },
-      )
-      .exec();
-
-    if (!updatedUser) {
-      throw new NotFoundException(`User with ID "${id}" not found`);
-    }
-
-    return updatedUser;
+  update(@Param('id') id: string, @Body() updateUserDto: any) {
+    return this.usersService.update(id, updateUserDto);
   }
 
   @Delete(':id')
-  @Roles(UserRole.CEO) // Only CEO can delete users
+  @Roles(UserRole.CEO, UserRole.Admin) // CEO and Admin can delete users
   remove(@Param('id') id: string) {
+    console.log('Deleting user with ID:', id);
     return this.usersService.remove(id);
   }
 }

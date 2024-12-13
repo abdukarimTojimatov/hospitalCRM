@@ -15,7 +15,7 @@ export class LoggerMiddleware implements NestMiddleware {
     this.logger.log(
       `
       ''''''''''''''''''''''''''''''''''''''''''''''''
-      ' Incoming Request==> ${method} ${originalUrl}   '
+          Incoming Request==> ${method} ${originalUrl}   
       ''''''''''''''''''''''''''''''''''''''''''''''''
 
       `,
