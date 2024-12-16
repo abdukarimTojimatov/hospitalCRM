@@ -6,6 +6,7 @@ import {
   Param,
   Put,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { AppointmentsService } from './appointments.service';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
@@ -20,8 +21,26 @@ export class AppointmentsController {
   }
 
   @Get()
-  findAll() {
-    return this.appointmentsService.findAll();
+  async findAll(
+    @Query('page') page: number,
+    @Query('limit') limit: number,
+    @Query('status') status?: string,
+    @Query('patientId') patientId?: string,
+    @Query('doctorId') doctorId?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    const result = await this.appointmentsService.findAll(
+      page,
+      limit,
+      status,
+      patientId,
+      doctorId,
+      startDate,
+      endDate,
+    );
+
+    return result;
   }
 
   @Get(':id')

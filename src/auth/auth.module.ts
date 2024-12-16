@@ -6,6 +6,7 @@ import { AuthController } from './auth.controller';
 import { AuthGuard } from './auth.guard'; // Import the custom AuthGuard
 import { UsersModule } from '../users/users.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { JwtWsAuthGuard } from './jwt-ws-auth.guard';
 
 @Module({
   imports: [
@@ -19,7 +20,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
     }),
     UsersModule, // Import UsersModule to access UsersService
   ],
-  providers: [AuthService, AuthGuard], // Provide AuthGuard in AuthModule
+  providers: [AuthService, AuthGuard, JwtWsAuthGuard], // Provide AuthGuard in AuthModule
   controllers: [AuthController],
   exports: [AuthService, AuthGuard], // Export AuthGuard if needed elsewhere
 })

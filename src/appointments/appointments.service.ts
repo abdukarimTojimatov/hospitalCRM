@@ -5,21 +5,23 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Appointment, AppointmentDocument } from './schemas/appoinments.schema';
-import { Model } from 'mongoose';
+import { Model, PaginateModel, PaginateResult } from 'mongoose';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { Patient, PatientDocument } from '../patients/schemas/patient.schema';
 import { Doctor, DoctorDocument } from '../doctors/schemas/doctors.schema';
 import { InjectConnection } from '@nestjs/mongoose';
 import { Connection } from 'mongoose';
+import { AppointmentsGateway } from './appointments.gateway'; // Import the gateway
 
 @Injectable()
 export class AppointmentsService {
   constructor(
     @InjectModel(Appointment.name)
-    private appointmentModel: Model<AppointmentDocument>,
+    private appointmentModel: PaginateModel<AppointmentDocument>,
+
     @InjectModel(Patient.name) private patientModel: Model<PatientDocument>,
     @InjectModel(Doctor.name) private doctorModel: Model<DoctorDocument>,
-    @InjectConnection() private connection: Connection,
+    private appointmentsGateway: AppointmentsGateway, // Inject the gateway
   ) {}
 
   async create(
@@ -38,15 +40,64 @@ export class AppointmentsService {
     }
 
     const appointment = new this.appointmentModel(createAppointmentDto);
-    return appointment.save();
-  }
-
-  async findAll(): Promise<Appointment[]> {
-    return this.appointmentModel
+    const newAppointment = await appointment.save();
+    const allAppointments = await this.appointmentModel
       .find()
       .populate('patient', 'firstName lastName')
       .populate('doctor', 'firstName lastName specialty')
       .exec();
+
+    await this.appointmentsGateway.sendAllAppointments(allAppointments);
+    return newAppointment;
+  }
+
+  async findAll(
+    page: number,
+    limit: number,
+    status?: string,
+    patientId?: string,
+    doctorId?: string,
+    startDate?: string,
+    endDate?: string,
+  ): Promise<PaginateResult<Appointment>> {
+    const filters: any = {};
+    if (status) {
+      filters.status = status;
+    }
+    if (patientId) {
+      filters.patient = patientId;
+    }
+    if (doctorId) {
+      filters.doctor = doctorId;
+    }
+    if (startDate || endDate) {
+      filters.createdAt = {};
+      if (startDate) {
+        filters.createdAt.$gte = new Date(startDate);
+      }
+      if (endDate) {
+        const endOfDay = new Date(endDate);
+        endOfDay.setHours(23, 59, 59, 999); // Set to the last millisecond of the day
+        filters.createdAt.$lte = endOfDay;
+      }
+    }
+
+    const options = {
+      page,
+      limit,
+      populate: [
+        { path: 'patient', select: 'firstName lastName' },
+        { path: 'doctor', select: 'firstName lastName specialty' },
+      ],
+      sort: { createdAt: -1 },
+    };
+
+    try {
+      let result = await this.appointmentModel.paginate(filters, options);
+      return result;
+    } catch (error) {
+      throw new BadRequestException('Error fetching appointments');
+    }
   }
 
   async findOne(id: string): Promise<Appointment> {

@@ -5,10 +5,10 @@ import { AppointmentsController } from './appointments.controller';
 import { Appointment, AppointmentSchema } from './schemas/appoinments.schema';
 import { Patient, PatientSchema } from '../patients/schemas/patient.schema';
 import { Doctor, DoctorSchema } from '../doctors/schemas/doctors.schema';
+import { AppointmentsGateway } from './appointments.gateway';
 
 @Module({
   imports: [
-    // We import Patient and Doctor schemas here as well because we reference them in Appointments
     MongooseModule.forFeature([
       { name: Appointment.name, schema: AppointmentSchema },
       { name: Patient.name, schema: PatientSchema },
@@ -16,6 +16,6 @@ import { Doctor, DoctorSchema } from '../doctors/schemas/doctors.schema';
     ]),
   ],
   controllers: [AppointmentsController],
-  providers: [AppointmentsService],
+  providers: [AppointmentsService, AppointmentsGateway],
 })
 export class AppointmentsModule {}

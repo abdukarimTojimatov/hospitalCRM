@@ -1,29 +1,53 @@
 import {
   IsString,
-  IsNotEmpty,
   IsOptional,
+  IsNotEmpty,
   IsDateString,
+  ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
+
+class AddressDto {
+  @IsOptional()
+  @IsString()
+  street?: string;
+
+  @IsOptional()
+  @IsString()
+  city?: string;
+
+  @IsOptional()
+  @IsString()
+  state?: string;
+
+  @IsOptional()
+  @IsString()
+  zip?: string;
+}
 
 export class CreatePatientDto {
-  @IsString()
   @IsNotEmpty()
+  @IsString()
   firstName: string;
 
-  @IsString()
   @IsNotEmpty()
+  @IsString()
   lastName: string;
 
-  @IsDateString()
-  dob: string;
-
-  @IsString()
   @IsNotEmpty()
+  @IsDateString()
+  dob: Date;
+
+  @IsNotEmpty()
+  @IsString()
   contactNumber: string;
 
-  @IsString()
   @IsOptional()
+  @IsString()
   email?: string;
 
-  // For address, you can either create a nested DTO or just leave optional strings.
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => AddressDto)
+  address?: AddressDto;
 }

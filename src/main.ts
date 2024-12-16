@@ -2,33 +2,26 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { AllExceptionsFilter } from './filters/http-exception.filter';
-import { WinstonModule } from 'nest-winston';
-import * as winston from 'winston';
-import { ResponseLoggingInterceptor } from './common/middleware/response.logger.middleware';
 import { AuthGuard } from './auth/auth.guard';
+import { IoAdapter } from '@nestjs/platform-socket.io';
+import { ServerOptions } from 'socket.io';
+
+class SocketIoAdapter extends IoAdapter {
+  createIOServer(port: number, options?: ServerOptions) {
+    const server = super.createIOServer(port, {
+      ...options,
+      cors: {
+        origin: 'http://localhost:3001',
+        methods: ['GET', 'POST'],
+        credentials: true,
+      },
+    });
+    return server;
+  }
+}
 
 async function bootstrap() {
-  const app = await NestFactory.create(
-    AppModule,
-    //   , {
-    //   logger: WinstonModule.createLogger({
-    //     transports: [
-    //       new winston.transports.Console({
-    //         format: winston.format.combine(
-    //           winston.format.timestamp(),
-    //           winston.format.colorize(),
-    //           winston.format.simple(),
-    //         ),
-    //       }),
-    //       new winston.transports.File({
-    //         filename: 'logs/error.log',
-    //         level: 'error',
-    //         format: winston.format.json(),
-    //       }),
-    //     ],
-    //   }),
-    // }
-  );
+  const app = await NestFactory.create(AppModule);
 
   // Global validation
   app.useGlobalPipes(
@@ -37,8 +30,16 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
   // Global exception filter
   app.useGlobalFilters(new AllExceptionsFilter());
-  //app.useGlobalInterceptors(new ResponseLoggingInterceptor());
-  app.useGlobalGuards(app.get(AuthGuard));
+
+  //app.useGlobalGuards(app.get(AuthGuard));
+  app.useWebSocketAdapter(new SocketIoAdapter(app));
+
+  app.enableCors({
+    origin: '*',
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE', // Allowed HTTP methods
+    credentials: true, // Allow credentials (cookies, headers)
+    allowedHeaders: 'Content-Type, Authorization', // Allowed headers
+  });
 
   await app.listen(process.env.PORT || 3000);
 }

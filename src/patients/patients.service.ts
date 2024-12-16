@@ -11,18 +11,15 @@ export class PatientsService {
   ) {}
 
   async create(createPatientDto: CreatePatientDto): Promise<Patient> {
-    console.log('Patients/create/service');
     const patient = new this.patientModel(createPatientDto);
     return patient.save();
   }
 
   async findAll(): Promise<Patient[]> {
-    console.log('Patients/findAll/service');
     return await this.patientModel.find().exec();
   }
 
   async findOne(id: string): Promise<Patient> {
-    console.log('Patients/findOne/service');
     const patient = await this.patientModel.findById(id).exec();
     if (!patient) throw new NotFoundException('Invalid doctor ID');
     return patient;
@@ -32,7 +29,6 @@ export class PatientsService {
     id: string,
     updateDto: Partial<CreatePatientDto>,
   ): Promise<Patient> {
-    console.log('Patients/update/service');
     return await this.patientModel
       .findByIdAndUpdate(id, updateDto, { new: true })
       .exec();
